@@ -1,37 +1,35 @@
 import { auth } from "@clerk/nextjs";
 import { NextResponse } from "next/server";
-import OpenAI from "openai";
+import Replicate from "replicate";
 import { checkSubscription } from "@/lib/subscription";
 
 import { increaseApiLimit, checkApiLimit } from "@/lib/api-limit";
 
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
+const replicate = new Replicate({
+    auth: process.env.REPLICATE_API_TOKEN!
 });
 
-const instructionMessage: any = {
-    role: "system",
-    content: "You are a code generator. You must answer only in markdown code snippets. Use code comments for explainations."
-}
 
 export async function POST(req: Request) {
     try {
 
         const { userId } = auth();
         const body = await req.json();
-        const { messages } = body;
+        const { prompt } = body;
 
         if (!userId) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
-        if (!process.env.OPENAI_API_KEY) {
-            return new NextResponse("OpenAI API not configured", { status: 500 });
+        if (!process.env.REPLICATE_API_TOKEN) {
+            return new NextResponse("Replicate API not configured", { status: 500 });
         }
 
-        if (!messages) {
-            return new NextResponse("Messages are required", { status: 400 });
+        if (!prompt) {
+            return new NextResponse("Prompt is required", { status: 400 });
         }
+
+
 
         const freeTrial = await checkApiLimit();
 
@@ -41,17 +39,22 @@ export async function POST(req: Request) {
         if (!freeTrial && !isPro) {
             return new NextResponse("Free trial has expired.", { status: 403 });
         }
-        const response = await openai.chat.completions.create({
-            model: 'gpt-3.5-turbo',
-            messages: [instructionMessage, ...messages]
-        });
+
+        const response = await replicate.run(
+            "anotherjesse/zeroscope-v2-xl:9f747673945c62801b13b84701c783929c0ee784e4748ec062204894dda1a351",
+            {
+                input: {
+                    prompt
+                }
+            }
+        );
 
         if (!isPro) {
             await increaseApiLimit();
         }
-        return NextResponse.json(response.choices[0].message);
+        return NextResponse.json(response);
     } catch (error) {
-        console.log("[CODE_ERROR] ", error);
+        console.log("[VIDEO_ERROR] ", error);
         return new NextResponse("Internal server error", { status: 500 });
     }
 

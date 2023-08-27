@@ -3,10 +3,10 @@
 import * as z from "zod";
 import axios from "axios";
 import Heading from "@/components/heading";
-import { ImageIcon } from "lucide-react";
+import { Download, ImageIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 
-import { formSchema } from "./constants";
+import { amountOptions, formSchema, resolutionOptions } from "./constants";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
@@ -17,14 +17,18 @@ import { useState } from "react";
 import { Empty } from "@/components/empty";
 import { Loader } from "@/components/loader";
 import { cn } from "@/lib/utils";
-import { UserAvatar } from "@/components/user-avatar";
-import { BotAvatar } from "@/components/bot-avatar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardFooter } from "@/components/ui/card";
+import Image from "next/image";
+import { useProModal } from "@/hooks/use-pro-modal";
+import { toast } from "react-hot-toast";
 
 const ImagePage = () => {
 
     const router = useRouter();
 
     const [images, setImages] = useState<string[]>([]);
+    const proModal = useProModal();
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -50,7 +54,11 @@ const ImagePage = () => {
             form.reset();
         } catch (error: any) {
             // Open Pro Modal
-            console.log(error);
+            if (error?.response?.status === 403) {
+                proModal.onOpen();
+            } else {
+                toast.error("Something went wrong!");
+            }
         } finally {
             router.refresh();
         }
@@ -77,7 +85,7 @@ const ImagePage = () => {
                             <FormField
                                 name="prompt"
                                 render={({ field }) => (
-                                    <FormItem className="col-span-12 lg:col-span-10">
+                                    <FormItem className="col-span-12 lg:col-span-6">
                                         <FormControl className="m-0 p-0">
                                             <Input
                                                 className="border-0 outline-none focus-visible:ring-0
@@ -92,10 +100,63 @@ const ImagePage = () => {
                             />
                             <FormField
                                 name="amount"
-                                control={form.control} 
+                                control={form.control}
                                 render={({ field }) => (
                                     <FormItem className="col-span-12 lg:col-span-2">
+                                        <Select
+                                            disabled={isLoading}
+                                            onValueChange={field.onChange}
+                                            value={field.value}
+                                            defaultValue={field.value}
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue defaultValue={field.value} />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {amountOptions.map((option) => (
+                                                    <SelectItem
+                                                        key={option.value}
+                                                        value={option.value}
+                                                    >
+                                                        {option.label}
 
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                name="resolution"
+                                control={form.control}
+                                render={({ field }) => (
+                                    <FormItem className="col-span-12 lg:col-span-2">
+                                        <Select
+                                            disabled={isLoading}
+                                            onValueChange={field.onChange}
+                                            value={field.value}
+                                            defaultValue={field.value}
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue defaultValue={field.value} />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {resolutionOptions.map((option) => (
+                                                    <SelectItem
+                                                        key={option.value}
+                                                        value={option.value}
+                                                    >
+                                                        {option.label}
+
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
                                     </FormItem>
                                 )}
                             />
@@ -114,7 +175,33 @@ const ImagePage = () => {
                     {images.length === 0 && !isLoading && (
                         <Empty label="No Images Generated." />
                     )}
-                    <div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-8">
+                        {images.map((src) => (
+                            <Card
+                                key={src}
+                                className="rounded-lg overflow-hidden"
+                            >
+                                <div className="relative aspect-square">
+                                    <Image
+                                        alt="Image"
+                                        fill
+                                        src={src}
+                                     />
+                                </div>
+                                <CardFooter className="p-2">
+                                    <Button
+                                        onClick={() => window.open(src)} 
+                                        variant="secondary" 
+                                        className="w-full">
+                                        <Download className="h-4 w-4 mr-2">
+                                            Download
+                                        </Download>
+
+                                    </Button>
+                                </CardFooter>
+
+                            </Card>
+                        ))}
                         Images will render here
                     </div>
                 </div>
