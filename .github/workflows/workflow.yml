@@ -24,6 +24,12 @@ jobs:
     - name: Build
       run: npm run build # Adjust the build command if needed
 
+    - name: Get Vercel Environment Variables
+      run: |
+        npx vercel env pull --token ${{ secrets.VERCEL_TOKEN }} --prod
+      env:
+        VERCEL_ENV: production
+
     - name: Deploy to Vercel
       run: npx vercel --token ${{ secrets.VERCEL_TOKEN }} --prod --scope shrestha-tripathi --project ai-toolkit
 
