@@ -23,7 +23,7 @@ jobs:
 
     - name: Get Vercel Environment Variables
       run: |
-        npx vercel env pull --token ${{ secrets.VERCEL_TOKEN }} --prod
+        npx vercel env pull --token ${{ secrets.VERCEL_TOKEN }}
       env:
         VERCEL_ENV: production
 
@@ -32,5 +32,5 @@ jobs:
 
 
     - name: Deploy to Vercel
-      run: npx vercel --token ${{ secrets.VERCEL_TOKEN }} --prod --scope shrestha-tripathi --project ai-toolkit
+      run: npx vercel --token ${{ secrets.VERCEL_TOKEN }} --scope shrestha-tripathi --project ai-toolkit
 
