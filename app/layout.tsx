@@ -10,7 +10,10 @@ const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'AI Genie',
-  description: 'AI Platform',
+  description: 'AI Toolkit Porgressive Web App with Next.js',
+  manifest: '/manifest.json',
+  icons: { apple: '/st-logo.png' },
+  themeColor: '#7b35f6',
 }
 
 export default function RootLayout({
